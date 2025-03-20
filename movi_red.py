@@ -3,13 +3,25 @@ from moviepy.editor import *
 from moviepy.video.fx.all import speedx
 from tkinter import *
 from tkinter import filedialog as fd
+import threading
+from tkinter import messagebox
+
+def process_video_async(func, *args):
+    def wrapper():
+        try:
+            func(*args)
+        except Exception as e:
+            messagebox.showerror("Ошибка", f"Произошла ошибка: {str(e)}")
+    thread = threading.Thread(target=wrapper)
+    thread.start()
+    return thread
 
 def rezka():
     def rez_get():
         start_time = float(start_time_Entry.get())
         end_time = float(end_time_Entry.get())
         name_file = fd.askopenfilename()
-        ffmpeg_extract_subclip(name_file, start_time, end_time)
+        process_video_async(ffmpeg_extract_subclip, name_file, start_time, end_time)
         rezkan.destroy()
     rezkan = Toplevel(root)
     rezkan.title("Окно нарезки")
@@ -31,7 +43,7 @@ def speedest():
         video_dir = fd.askopenfilename()
         video = VideoFileClip(video_dir)
         video_fast = video.fx(speedx, speed)
-        video_fast.write_videofile("fast_video.mp4")
+        process_video_async(video_fast.write_videofile, "E:/fast_video.mp4")
         speeedest.destroy()
     speeedest = Toplevel(root)
     speeedest.title("Окно ускорения")
@@ -52,7 +64,7 @@ def comb():
             clicks = VideoFileClip(combik_dir)
             clips.append(clicks)
         final = concatenate_videoclips(clips)
-        final.write_videofile("comp_vid.mp4")
+        process_video_async(final.write_videofile, "E:/comp_vid.mp4")
         combik.destroy()
     combik = Toplevel(root)
     combik.title("Окно соединения")
@@ -64,11 +76,9 @@ def comb():
     btm_combikfile = Button(combik, text="Выбрать файл", command=lambda: combik_final())
     btm_combikfile.grid(row=1, column=0)
 
-
 root = Tk()
 root.title("Редактор видосов")
 root.geometry('800x600')
-
 button1 = Button(root, text="Нарезка", command=rezka)
 button1.grid(row=0, column=0)
 button2 = Button(root, text="Ускорение", command=speedest)
